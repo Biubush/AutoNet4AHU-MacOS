@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.biubush.autonet4ahu</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>%PYTHON_PATH%</string>
+        <string>%SCRIPT_PATH%</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+    <key>StartInterval</key>
+    <integer>900</integer>
+    <key>StandardErrorPath</key>
+    <string>%LOG_PATH%/autonet4ahu_error.log</string>
+    <key>StandardOutPath</key>
+    <string>%LOG_PATH%/autonet4ahu_output.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+    <key>WorkingDirectory</key>
+    <string>%WORKING_DIR%</string>
+    <key>WatchPaths</key>
+    <array>
+        <string>/Library/Preferences/SystemConfiguration/com.apple.airport.preferences.plist</string>
+    </array>
+    <key>LaunchOnlyOnce</key>
+    <false/>
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist> 

@@ -1,0 +1,136 @@
+name: 构建并发布macOS版本
+
+on:
+  push:
+    tags:
+      - 'v*' # 当推送带有v开头的标签时触发，如v1.0.0
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v3
+      
+    - name: 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: 获取版本号
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      shell: bash
+    
+    - name: 安装create-dmg
+      run: |
+        brew install create-dmg
+        
+    - name: 安装通用依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install virtualenv
+      
+    - name: 编译loginCore模块
+      run: |
+        # 创建虚拟环境
+        python -m virtualenv loginCore_env
+        
+        # 激活虚拟环境
+        source loginCore_env/bin/activate
+        
+        # 安装依赖并编译
+        cd loginCore
+        pip install -r requirements.txt
+        
+        # 确保build.sh有执行权限
+        chmod +x build.sh
+        
+        # 执行编译脚本
+        ./build.sh
+        
+        # 检查login程序是否生成
+        cd ..
+        if [ ! -f "UI/login" ]; then
+          echo "ERROR: login程序未生成"
+          exit 1
+        fi
+        
+        # 退出虚拟环境
+        deactivate
+      shell: bash
+      
+    - name: 编译UI模块
+      run: |
+        # 创建虚拟环境
+        python -m virtualenv UI_env
+        
+        # 激活虚拟环境
+        source UI_env/bin/activate
+        
+        # 安装依赖
+        cd UI
+        pip install -r requirements.txt
+        
+        # 确认login程序已存在
+        if [ ! -f "login" ]; then
+          echo "ERROR: login程序不存在于UI目录"
+          exit 1
+        fi
+        
+        # 准备图标文件（如果不存在，使用临时图标）
+        if [ ! -f "icon.png" ]; then
+          echo "未找到icon.png，创建临时图标..."
+          # 创建一个简单的蓝色正方形作为临时图标
+          convert -size 512x512 xc:#0077ff "icon.png"
+        fi
+        
+        # 确保build.sh有执行权限
+        chmod +x build.sh
+        
+        # 执行编译脚本
+        ./build.sh
+        
+        # 退出虚拟环境
+        cd ..
+        deactivate
+      shell: bash
+      
+    - name: 对DMG文件进行签名和公证（可选步骤）
+      run: |
+        echo "注意: 此步骤在GitHub Actions中略过。在实际发布中，您可能需要对DMG文件进行签名和公证。"
+      shell: bash
+    
+    - name: 创建Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          AutoNet4AHU.dmg
+        name: AutoNet4AHU-MacOS ${{ steps.get_version.outputs.VERSION }}
+        body: |
+          # AutoNet4AHU-MacOS 发布版本 ${{ steps.get_version.outputs.VERSION }}
+          
+          此版本由GitHub Actions自动构建于 ${{ github.event.repository.updated_at }}
+          
+          ## 系统要求
+          - macOS 10.13 (High Sierra) 或更高版本
+          
+          ## 使用方法
+          1. 下载并打开 `AutoNet4AHU.dmg`
+          2. 将 `AutoNet4AHU.app` 拖动到应用程序文件夹
+          3. 运行 `AutoNet4AHU.app`
+          4. 按照界面提示配置并使用
+          
+          详细说明请参阅[README文档](https://github.com/biubush/AutoNet4AHU-MacOS/blob/main/README.md)
+          
+          ## 注意事项
+          - 首次打开可能需要在"系统偏好设置 > 安全性与隐私"中允许运行
+          - 程序使用LaunchAgent实现自启动，不会修改系统文件
+          - 所有配置信息均保存在本地，不会上传至任何服务器
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
