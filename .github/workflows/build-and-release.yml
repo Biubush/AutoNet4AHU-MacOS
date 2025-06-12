@@ -97,11 +97,6 @@ jobs:
         cd ..
         deactivate
       shell: bash
-      
-    - name: 对DMG文件进行签名和公证（可选步骤）
-      run: |
-        echo "注意: 此步骤在GitHub Actions中略过。在实际发布中，您可能需要对DMG文件进行签名和公证。"
-      shell: bash
     
     - name: 创建Release
       id: create_release
